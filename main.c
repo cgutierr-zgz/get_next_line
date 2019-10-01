@@ -6,7 +6,7 @@
 /*   By: cgutierr <cgutierr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/07/22 14:31:16 by cgutierr          #+#    #+#             */
-/*   Updated: 2020/08/11 13:16:47 by cgutierr         ###   ########.fr       */
+/*   Updated: 2021/02/07 19:02:20 by cgutierr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,71 +18,79 @@
 ** followed by a '\n'
 **
 ** Needed arguments: Executable followed by the required fd
+** For debbugging purposes:
+** 		gcc -g3 -fsanitize=address -D BUFFER_SIZE=6 get_next_line.c main.c && ./a.out fd
 */
 
 #include "get_next_line.h"
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
-
-size_t	stringlength(const char *str)
+int main(int argc, char **argv)
 {
-	size_t len;
+	int x;
+	int fd;
+	char *line;
 
-	len = 0;
-	while (str[len])
-		len++;
-	return (len);
-}
-
-char	*joinstrings(char const *s1, char const *s2)
-{
-	char	*str;
-	size_t	i;
-
-	if (!s1 || !s2)
-		return (NULL);
-	if (!(str = (char *)malloc(sizeof(*str) *
-		(stringlength(s1) + stringlength(s2) + 1))))
-		return (NULL);
-	i = 0;
-	while (*s1)
+	if (argc == 2 || argc == 3 || argc == 4)
 	{
-		str[i] = *s1;
-		i++;
-		s1++;
-	}
-	while (*s2)
-	{
-		str[i] = *s2;
-		i++;
-		s2++;
-	}
-	str[i] = '\0';
-	return (str);
-}
-
-int		main(int argc, char **argv)
-{
-	int		i;
-	int		fd;
-	char	*line;
-
-	if (argc == 2)
-	{
-		i = 0;
-		fd = open(joinstrings("./", argv[1]), O_RDONLY);
+		fd = open(argv[1], O_RDONLY);
 		if (fd == -1)
 		{
-			printf("Error: couldn't open fd \"./%s\"\n", argv[1]);
+			printf("Error: couldn't open fd \"%s\"\n", argv[1]);
 			return (1);
 		}
 		else
 		{
-			while ((get_next_line(fd, &line)) == 1)
+			x = 0;
+			int j;
+			printf("TEST WITH BUFFER_SIZE=%d\n________________________________\n\tSTART OF FILE\n________________________________\n", BUFFER_SIZE);
+			while ((j = get_next_line(fd, &line)) == 1)
 			{
-				printf("%s\n", line);
+				x++;
+				if (argc == 4)
+				{
+					if (!strcmp(argv[3], "--lines"))
+						printf("Line %d\t|%d|\t$>%s$\n", x, j, line);
+					else
+						printf("%s\n", line);
+				}
+				else
+					printf("%s\n", line);
+				free(line);
 			}
+			x++;
+			if (argc == 4)
+			{
+				if (!strcmp(argv[3], "--lines"))
+					printf("Line %d\t|%d|\t$>%s$\n", x, j, line);
+				else
+					printf("%s]n", line);
+			}
+			else
+				printf("%s\n", line);
+			printf("\n________________________________\n\tEND OF FILE\n________________________________\n");
 			close(fd);
+		}
+
+		if (argc >= 3)
+		{
+			if (!strcmp(argv[2], "--leaks"))
+			{
+				printf("\nSYSTEM LEAKS OF [%s %s]\n\n", argv[0], argv[1]);
+				system("leaks a.out");
+			}
+			else if (!strcmp(argv[2], "--noleaks"))
+				;
+			else
+				printf("\nCOMMAND NOT FOUNT \"%s\"\n", argv[2]);
+		}
+		if (argc == 4)
+		{
+			if (!strcmp(argv[3], "--nolines"))
+				;
+			else if (strcmp(argv[3], "--lines"))
+				printf("\nCOMMAND NOT FOUNT \"%s\"\n", argv[3]);
 		}
 	}
 	else
