@@ -6,7 +6,7 @@
 /*   By: cgutierr <cgutierr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/07/20 12:29:54 by cgutierr          #+#    #+#             */
-/*   Updated: 2020/07/22 10:45:27 by cgutierr         ###   ########.fr       */
+/*   Updated: 2020/07/22 12:27:36 by cgutierr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,17 +54,22 @@
 //		-> 1 = standard output(shell)
 //		-> 2 = error output(shell)
 
-int get_next_line(int fd, char **line) 
+int get_next_line(int fd, char **line)
 {
-	char	buf[BUFFER_SIZE + 1];
-	int		ret; // Static ?
-
-	if(fd <= 0) // Si el file descriptor esta chungo y tal pos fuera (-1)?
+	char buf[BUFFER_SIZE + 1];
+	int ret;
+	static int i = 0;
+	if (fd < 0 || !*line || !line)
 		return (-1);
 
 	while (ret = read(fd, buf, BUFFER_SIZE))
 	{
 		buf[ret] = '\0';
+		line[i] = buf;
+
+		i++;
 		printf("%s", buf);
+		
 	}
+	return (0);
 }
