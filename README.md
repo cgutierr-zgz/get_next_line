@@ -8,3 +8,6 @@ Return values:
 <code>0: The reading has been completed</code>
 
 <code>-1: An error has happened</code>
+
+# Result
+-/100
