@@ -1,4 +1,6 @@
 # get_next_line
+<img src ="https://img.shields.io/badge/Result-X%2F100-green"/>
+
 A function that returns a line ending with a new line, read from a file descriptor made at 42.
 
 Return values:
@@ -8,6 +10,3 @@ Return values:
 <code>0: The reading has been completed</code>
 
 <code>-1: An error has happened</code>
-
-# Result
--/100
