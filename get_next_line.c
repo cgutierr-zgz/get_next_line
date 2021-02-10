@@ -5,30 +5,30 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: cgutierr <cgutierr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/02/03 12:42:49 by cgutierr          #+#    #+#             */
-/*   Updated: 2021/02/07 18:53:31 by cgutierr         ###   ########.fr       */
+/*   Created: 2021/02/09 14:33:19 by cgutierr          #+#    #+#             */
+/*   Updated: 2021/02/09 17:15:52 by cgutierr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*ft_text(char *buffer, char *text)
+static int	ft_end(int fd, char **text)
 {
-	char	*aux;
+	char *aux;
 
-	if (!text)
-		text = ft_strdup(buffer);
-	else
+	if (!ft_strchr(text[fd], '\n'))
 	{
-		aux = ft_strjoin(text, buffer);
-		free(text);
-		text = ft_strdup(aux);
-		free(aux);
+		free(text[fd]);
+		text[fd] = NULL;
+		return (0);
 	}
-	return (text);
+	aux = ft_strdup(ft_strchr(text[fd], '\n') + 1);
+	free(text[fd]);
+	text[fd] = aux;
+	return (1);
 }
 
-char	*ft_getstringuntiljump(char *text, char character)
+static char	*ft_getstringuntiljumporend(char **text, int fd)
 {
 	char	*aux;
 	int		i;
@@ -36,57 +36,53 @@ char	*ft_getstringuntiljump(char *text, char character)
 
 	i = 0;
 	x = -1;
-	while (text[i] != character)
+	while (text[fd][i] != '\n' && text[fd][i])
 		i++;
 	if (!(aux = (char *)malloc(sizeof(char) * (i + 1))))
 		return (NULL);
 	while (++x < i)
-		aux[x] = text[x];
+		aux[x] = text[fd][x];
 	aux[x] = '\0';
 	return (aux);
 }
 
-int		ft_lastline(int n_bytes, char *text, char **line)
+static void	ft_text(char *buff, int fd, char **text)
 {
-	if (n_bytes == 0 && text && !ft_strchr(text, '\n'))
+	char *aux;
+
+	if (!text[fd])
+		text[fd] = ft_strdup(buff);
+	else
 	{
-		*line = ft_strdup(text);
-		text[0] = '\0';
-		return (0);
+		aux = ft_strjoin(text[fd], buff);
+		free(text[fd]);
+		text[fd] = aux;
 	}
-	if (n_bytes == 0 && !text)
+}
+
+int			get_next_line(int fd, char **line)
+{
+	static char	*text[MAX_FD];
+	char		buff[BUFFER_SIZE + 1];
+	int			n;
+
+	if (fd < 0 || !line || BUFFER_SIZE <= 0)
+		return (-1);
+	while ((n = read(fd, buff, BUFFER_SIZE)) > 0)
 	{
+		buff[n] = '\0';
+		ft_text(buff, fd, text);
+		if (ft_strchr(text[fd], '\n'))
+			break ;
+	}
+	if (n < 0 || (n == 0 && !text[fd]))
+	{
+		if (n < 0)
+			return (-1);
 		*line = ft_strdup("");
 		return (0);
 	}
-	return (1);
-}
-
-int		get_next_line(int fd, char **line)
-{
-	static char	*text[256];
-	char		buff[BUFFER_SIZE + 1];
-	int			n_bytes;
-	char		*temp;
-
-	if (fd < 0 || !line || BUFFER_SIZE <= 0 || read(fd, NULL, 0) == -1)
+	if (!(*line = ft_getstringuntiljumporend(text, fd)))
 		return (-1);
-	while ((n_bytes = read(fd, buff, BUFFER_SIZE)))
-	{
-		if (n_bytes == -1)
-			return (-1);
-		buff[n_bytes] = '\0';
-		text[fd] = ft_text(buff, text[fd]);
-		if (ft_strchr(buff, '\n'))
-			break ;
-	}
-	if (!ft_lastline(n_bytes, text[fd], line))
-		return (0);
-	*line = ft_getstringuntiljump(text[fd], '\n');
-	temp = ft_strdup(ft_strchr(text[fd], '\n'));
-	free(text[fd]);
-	text[fd] = NULL;
-	text[fd] = ft_strdup(temp + 1);
-	free(temp);
-	return (1);
+	return (ft_end(fd, text));
 }
